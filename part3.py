@@ -23,18 +23,16 @@ def nothing(x):
 
 # WEBCAM INPUT
 # cam = cv2.VideoCapture(0)
-# cv2.namedWindow(window_name)    
-# cv2.createTrackbar(trackbar_type, window_name , 3, max_type, nothing)
-# # Create Trackbar to choose Threshold value
-# cv2.createTrackbar(trackbar_value, window_name , 0, max_value, nothing)
-# # Call the function to initialize
-# cv2.createTrackbar(trackbar_blur, window_name , 1, 20, nothing)
-# # create switch for ON/OFF functionality
-# color_switch = 'Color'
-# cv2.createTrackbar(color_switch, window_name,0,1,nothing)
-# cv2.createTrackbar('Contours', window_name,0,1,nothing)
-
-# IMAGE INPUT 
+cv2.namedWindow(window_name)    
+cv2.createTrackbar(trackbar_type, window_name , 3, max_type, nothing)
+# Create Trackbar to choose Threshold value
+cv2.createTrackbar(trackbar_value, window_name , 0, max_value, nothing)
+# Call the function to initialize
+cv2.createTrackbar(trackbar_blur, window_name , 1, 20, nothing)
+# create switch for ON/OFF functionality
+color_switch = 'Color'
+cv2.createTrackbar(color_switch, window_name,0,1,nothing)
+cv2.createTrackbar('Contours', window_name,0,1,nothing)
 
 
 while True:
@@ -52,18 +50,18 @@ while True:
     #2: Threshold Truncated
     #3: Threshold to Zero
     #4: Threshold to Zero Inverted
-    threshold_type = 1
-    threshold_value = 0
-    blur_value = 1
-    blur_value = blur_value+ (  blur_value%2==0)
-    isColor = 0
-    findContours = 0
-    # threshold_type = cv2.getTrackbarPos(trackbar_type, window_name)
-    # threshold_value = cv2.getTrackbarPos(trackbar_value, window_name)
-    # blur_value = cv2.getTrackbarPos(trackbar_blur, window_name)
+    # threshold_type = 1
+    # threshold_value = 0
+    # blur_value = 1
     # blur_value = blur_value+ (  blur_value%2==0)
-    # isColor = (cv2.getTrackbarPos(color_switch, window_name) == 1)
-    # findContours = (cv2.getTrackbarPos('Contours', window_name) == 1)
+    # isColor = 0
+    # findContours = 0
+    threshold_type = cv2.getTrackbarPos(trackbar_type, window_name)
+    threshold_value = cv2.getTrackbarPos(trackbar_value, window_name)
+    blur_value = cv2.getTrackbarPos(trackbar_blur, window_name)
+    blur_value = blur_value+ (  blur_value%2==0)
+    isColor = (cv2.getTrackbarPos(color_switch, window_name) == 1)
+    findContours = (cv2.getTrackbarPos('Contours', window_name) == 1)
 
     ###########################
     #    For skin calc        #
@@ -117,112 +115,30 @@ while True:
     #    Component Analysis (start)       #
     #######################################
     # threshold and binarize the image
-    gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)  
+    #gray = cv2.cvtColor(skin,cv2.COLOR_BGR2GRAY)  
     #PART TWO RET
     #ret, thresh = cv2.threshold(gray, 0, max_binary_value, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU ) 
-    ret, thresh = cv2.threshold(gray, 0, max_binary_value, cv2.THRESH_BINARY+cv2.THRESH_OTSU )
+    ret, thresh = cv2.threshold(output, 0, max_binary_value, cv2.THRESH_BINARY)
     #do this for part 3
-    thresholdedHandImage = thresh
-    # colors different components in different shades of orange
-    ret, markers, stats, centroids = cv2.connectedComponentsWithStats(output,ltype=cv2.CV_16U)  
-    markers = np.array(markers, dtype=np.uint8)  
-    label_hue = np.uint8(179*markers/np.max(markers))  
-    blank_ch = 255*np.ones_like(label_hue)  
-    labeled_img = cv2.merge([label_hue, blank_ch, blank_ch])
-    labeled_img = cv2.cvtColor(labeled_img,cv2.COLOR_HSV2BGR)
-    labeled_img[label_hue==0] = 0 
+    #subImg = thresh
     #######################################
     #    Component Analysis (end)       #
     #######################################
 
-    
-    #############################
-    #    Contours (start)       #
-    #############################
-    # if (ret>2):
-    #     #print("120")
-    #     try:
-    #         #print("122")
-    #         statsSortedByArea = stats[np.argsort(stats[:, 4])]  
-    #         roi = statsSortedByArea[-3][0:4]  
-    #         x, y, w, h = roi  
-    #         subImg = labeled_img[y:y+h, x:x+w]
-    #         #print("126")  
-    #         subImg = cv2.cvtColor(subImg, cv2.COLOR_BGR2GRAY);  
-    #         #print("127")
-    #         _, contours, _ = cv2.findContours(subImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)  
-    #         maxCntLength = 0  
-    #         for i in range(0,len(contours)): 
-    #             #print("130") 
-    #             cntLength = len(contours[i])  
-    #             if(cntLength>maxCntLength):  
-    #                 cnt = contours[i]  
-    #                 maxCntLength = cntLength  
-    #         if(maxCntLength>=5):  
-    #             ellipseParam = cv2.fitEllipse(cnt)  
-    #             (x,y),(MA,ma),angle = ellipseParam
-    #             subImg = cv2.cvtColor(subImg, cv2.COLOR_GRAY2RGB);  
-    #             subImg = cv2.ellipse(subImg,ellipseParam,(0,255,0),2)  
-            
-    #         #text = str("x = " + str(x) + "\ny= " + str(y) + "\nMA = " + str(MA) + "\nma = " + str(ma) + "angle = " + str(angle))   
-    #         #print(text)
-    #         #subImg = cv2.resize(subImg, (0,0), fx=3, fy=3)  
-    #         #image = cv2.putText(subImg, text, org, font, fontScale, color, thickness, cv2.LINE_AA, False)
-    #         #cv2.imshow("ROI "+str(2), subImg)  
-    #         # cv2.waitKey(1)
-    #         # k = cv2.waitKey(1) #k is the key pressed
-    #         # if k == 27 or k==113:  #27, 113 are ascii for escape and q respectively
-    #         #     #exit
-    #         #     cv2.destroyAllWindows()
-    #         #     cam.release()
-    #         #     break
-  
-    #     except Exception as inst: 
-    #         # print(type(inst))     # the exception instance
-    #         # print(inst.args)      # arguments stored in .args
-    #         # print(inst)           # __str__ allows args to be printed directly
-    #         # x, y = inst.args
-    #         # print('x =', x)
-    #         # print('y =', y) 
-    #         #print("No hand found")
-    #         pass
-    ###########################
-    #    Contours (end)       #
-    ###########################
-
     ##################################
     #    3a Hand Image (start)       #
     ##################################
-    # _, contours, _ = cv2.findContours(thresholdedHandImage, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)       
-    # contours=sorted(contours,key=cv2.contourArea,reverse=True)       
-    # #hull = [cv2.convexHull(c, returnPoints=False) for c in contours]
-    # #hull = np.array(hull, dtype=object)
-    # if len(contours)>1:  
-    #     largestContour = contours[0]  
-    #     #hull = cv2.convexHull(largestContour, returnPoints = False)     
-    #     for cnt in contours[:1]:  
-    #         defects = cv2.convexityDefects(cnt,hull)  
-    #         if(not isinstance(defects,type(None))):  
-    #             for i in range(defects.shape[0]):  
-    #                 s,e,f,d = defects[i,0]  
-    #                 start = tuple(cnt[s][0])  
-    #                 end = tuple(cnt[e][0])  
-    #                 far = tuple(cnt[f][0])
+    #subImg = cv2.cvtColor(subImg, cv2.COLOR_GRAY2RGB)
+    thresholdedHandImage = thresh
 
-    #                 output = cv2.cvtColor(thresholdedHandImage, cv2.COLOR_GRAY2RGB);
-    #                 output = cv2.line(output,start,end,[0,255,0],2)  
-    #                 output = cv2.circle(output,far,5,[0,0,255],-1)
-
-    #                 #visual = cv2.resize(output, (850, 480))
-    #                 visual = output
-    #                 cv2.imshow(window_name, visual)
     _, contours, _ = cv2.findContours(thresholdedHandImage.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)       
-    contours=sorted(contours,key=cv2.contourArea,reverse=True)       
+    contours=sorted(contours,key=cv2.contourArea,reverse=True) 
+    thresholdedHandImage = cv2.cvtColor(thresholdedHandImage, cv2.COLOR_GRAY2RGB)      
     if len(contours)>1:  
         largestContour = contours[0]  
         hull = cv2.convexHull(largestContour, returnPoints = False)     
         for cnt in contours[:1]:  
-            defects = cv2.convexityDefects(largestContour,hull)  
+            defects = cv2.convexityDefects(cnt,hull)  
             if(not isinstance(defects,type(None))):  
                 for i in range(defects.shape[0]):  
                     s,e,f,d = defects[i,0]  
@@ -230,12 +146,31 @@ while True:
                     end = tuple(cnt[e][0])  
                     far = tuple(cnt[f][0])  
                     
-                    cv2.cvtColor(thresholdedHandImage, cv2.COLOR_GRAY2RGB)
                     cv2.line(thresholdedHandImage,start,end,[0,255,0],2)  
-                    cv2.circle(thresholdedHandImage,far,20,[0,0,255],-1)
+                    cv2.circle(thresholdedHandImage,far,5,[0,0,255],-1)
+
+    #thresholdedHandImage = cv2.cvtColor(labeled_img,cv2.COLOR_HSV2BGR)
+    # _, contours, _ = cv2.findContours(thresholdedHandImage, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)       
+    # contours=sorted(contours,key=cv2.contourArea,reverse=True)       
+    # if len(contours)>1:  
+    #     largestContour = contours[0]  
+    #     hull = cv2.convexHull(largestContour, returnPoints = False)     
+    #     for cnt in contours[:1]:  
+    #         defects = cv2.convexityDefects(largestContour,hull)  
+    #         if(not isinstance(defects,type(None))):  
+    #             for i in range(defects.shape[0]):  
+    #                 s,e,f,d = defects[i,0]  
+    #                 start = tuple(cnt[s][0])  
+    #                 end = tuple(cnt[e][0])  
+    #                 far = tuple(cnt[f][0])  
+                    
+    #                 #thresholdedHandImage = cv2.cvtColor(thresholdedHandImage, cv2.COLOR_GRAY2RGB)
+    #                 cv2.line(thresholdedHandImage,start,end,[0,255,0],2)  
+    #                 cv2.circle(thresholdedHandImage,far,20,[0,0,255],-1)
         #visual = cv2.resize(output, (850, 480))
         #output = cv2.cvtColor(thresholdedHandImage, cv2.COLOR_GRAY2RGB)
         visual = thresholdedHandImage
+        visual = cv2.resize(visual, (426, 512))
         cv2.imshow(window_name, visual)
 
 
