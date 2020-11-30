@@ -23,7 +23,7 @@ def nothing(x):
 	pass
 
 # WEBCAM INPUT
-cam = cv2.VideoCapture("handMovie3.mov")
+cam = cv2.VideoCapture("handMovieBest.mov")
 cv2.namedWindow(window_name)    
 cv2.createTrackbar(trackbar_type, window_name , 3, max_type, nothing)
 # Create Trackbar to choose Threshold value
@@ -113,7 +113,7 @@ while True:
 			_, contours, hierarchy = cv2.findContours( blur, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE )
 			blur = cv2.cvtColor(blur, cv2.COLOR_GRAY2BGR)  #add this line
 			output = cv2.drawContours(blur, contours, -1, (0, 255, 0), 1)
-			print(str(len(contours))+"\n")
+			#print(str(len(contours))+"\n")
 		else:
 			output = blur  
 	else:
@@ -148,6 +148,7 @@ while True:
 	contours=sorted(contours,key=cv2.contourArea,reverse=True) 
 	thresholdedHandImage = cv2.cvtColor(thresholdedHandImage, cv2.COLOR_GRAY2RGB)      
 	spacePressed = False
+	count = 0
 	try:
 		if len(contours)>1:  
 			largestContour = contours[0]
@@ -173,12 +174,6 @@ while True:
 						start = tuple(cnt[s][0])  
 						end = tuple(cnt[e][0])  
 						far = tuple(cnt[f][0])
-
-						cv2.circle(thresholdedHandImage, far, 10, teal, -5) #teal
-						cv2.line(thresholdedHandImage,start,end,[0,255,0],2)
-						cv2.circle(thresholdedHandImage, start, 10, green, -5) #green
-						cv2.circle(thresholdedHandImage, end, 10, red, -5) #red
-						cv2.circle(thresholdedHandImage, (cX, cY), 10, purple, -5) #purple
 						
 						#print("far = ", str(far))
 						#print("start = ", str(start))
@@ -189,67 +184,91 @@ while True:
 						b_squared = (end[0] - far[0]) ** 2 + (end[1] - far[1]) ** 2  
 						angle = np.arccos((a_squared + b_squared  - c_squared ) / (2 * np.sqrt(a_squared * b_squared )))    
 						
-						# calculate distance between (cX, cY) and start
-						radi = np.sqrt((start[0]-cX)**2 + (start[1]-cY)**2)
-						cv2.line(thresholdedHandImage,(cX,cY), start,[0,255,0],2)
-						print(radi)
-
-						#print("c_squared = ", str(c_squared))
-						#print("angle = ", str(angle))
-
-						#dlist.append(d)
 						
 
-						#print("far is : ", far)
+						# lets only look at fingertips
+						# this is where the distance between start and end points in current frame
+						# is greater than 200
+						if(c_squared>200):
+							# print("---------------------------------------")
+							# print(c_squared)
+							# print(a_squared)
+							# print(b_squared)
+							# print(str(angle))
+							#cv2.circle(thresholdedHandImage, far, 10, teal, -5) #teal
+							#cv2.line(thresholdedHandImage, start, (cX, cY), green,2)
+							#cv2.circle(thresholdedHandImage, start, 10, green, -5) #green
+							#cv2.circle(thresholdedHandImage, end, 10, red, -5) #red
+							#cv2.circle(thresholdedHandImage, (cX, cY), 10, green, -5) #purple
+							# calculate distance between (cX, cY) and start
+							radi = np.sqrt((start[0]-cX)**2 + (start[1]-cY)**2)
+							#cv2.line(thresholdedHandImage,(cX,cY), far,[0,255,0],2)
+							#print(radi)
 
-						if angle <= np.pi / 3:  
-							fingerCount += 1  
-							#print("far = ", str(far))
-							#print("start = ", str(start))
-							#print("end = ", str(end))
-						ffdlist.append((far, fingerCount, d))
-						visual = cv2.resize(thresholdedHandImage, (850, 480))
-						#print("max d detected: " , maxd)
-						#resize for image input
-						#visual = cv2.resize(visual, (426, 512))
-						print(ffdlist)
-						cv2.imshow(window_name, visual)
-						key = cv2.waitKey(10000)
-						#clear up colors for next frame visualization
-						cv2.circle(thresholdedHandImage, far, 10, [0, 0, 0], -5) 
-						cv2.line(thresholdedHandImage,start,end,[0, 0, 0],2)
-						cv2.circle(thresholdedHandImage, start, 10, [0, 0, 0], -5) 
-						cv2.circle(thresholdedHandImage, end, 10, [0, 0, 0], -5) 
-					print("next segment!--------------------------")
+							#print("c_squared = ", str(c_squared))
+							#print("angle = ", str(angle))
+
+							#dlist.append(d)
+							
+
+							#print("far is : ", far)
+
+							if angle <= np.pi / 2.5:  
+								fingerCount += 1  
+								#print("far = ", str(far))
+								#print("start = ", str(start))
+								#print("end = ", str(end))
+							ffdlist.append((start, fingerCount, radi, (cX, cY)))
+							#print(ffdlist)
+							
+							key = cv2.waitKey(1000)
+							#clear up colors for next frame visualization
+							#cv2.line(thresholdedHandImage,start,end,[255,255,255],2)
+							#cv2.circle(thresholdedHandImage, far, 10, [0, 0, 0], -5) 
+							#cv2.line(thresholdedHandImage,start,end,[0, 0, 0],2)
+							#cv2.line(thresholdedHandImage, start, (cX, cY), [255,255,255],2)
+							#cv2.circle(thresholdedHandImage, start, 10, [0, 0, 0], -5) 
+							#cv2.circle(thresholdedHandImage, end, 10, [0, 0, 0], -5) 
+							#visual = cv2.resize(thresholdedHandImage, (850, 480))
+							#print("max d detected: " , maxd)
+							#resize for image input
+							#visual = cv2.resize(visual, (426, 512))
+							#print(ffdlist)
+							#cv2.imshow(window_name, visual)
+					#print("next segment!--------------------------")
 			#print(dlist)
 			
 			#print(min(dlist))
 			# inbuilt function to find the position of maximum 
-			dlist = [item[2] for item in ffdlist]
-			maxpos = dlist.index(max(dlist))
+			radilist = [item[2] for item in ffdlist]
+			maxpos = radilist.index(max(radilist))
 			#print(maxd)
 
 			cv2.circle(thresholdedHandImage, tuple(ffdlist[maxpos][0]), 25, [86, 100, 222], -100) #teal
-
+			
 			maxfarX, maxfarY = tuple(ffdlist[maxpos][0])
-			#print(ffdlist[maxpos])
+			
 			cv2.line(thresholdedHandImage, (cX, cY), (maxfarX, maxfarY), [0, 0, 255], 3)
 
 			DifferenceX = cX - maxfarX
-			#print("DifferenceX = ", DifferenceX)
-
+			print("DifferenceX = ", str(DifferenceX))
+			
 			# So this will give us the one with the largest d BUT NOT THE CORRECT FINGER COUNT
 			ffd = list(ffdlist[maxpos])
 
-			print(ffdlist)
-			print(str(ffd))
+			# Then lets update this so that it reflects the highest finger count from the list which can be found in most recent list item
+			ffd[1] = ffdlist[len(ffdlist)-1][1]
 
-			if  maxd >15000:
+			#print(ffdlist)
+			#print(str(ffd))
+
+			if  max(radilist) >300:
+				#print("insider fingerlist")
 				fingerCount += 1
 				ffd[1] += 1
+			
 			#print(maxd)
 			#maxf = max(flist)
-
 			# Add the max ffd to the list of the last 50 frames 
 			if len(farList) <= 50:
 				farList.append(ffd)
@@ -261,21 +280,20 @@ while True:
 
 			outputMessage = str(fingerCount)
 
-			print(ffdlist[maxpos])
+			print(ffd)
+			# cv2.putText(thresholdedHandImage, outputMessage, 
+			# 				bottomLeftCornerOfText, 
+			# 				font, 
+			# 				fontScale,
+			# 				fontColor,
+			# 				lineType)
+			# visual = cv2.resize(thresholdedHandImage, (850, 480))
+			# 	#print("max d detected: " , maxd)
+			# 	#resize for image input
+			# 	#visual = cv2.resize(visual, (426, 512))
+			# cv2.imshow(window_name, visual)
 
-			cv2.putText(thresholdedHandImage, outputMessage, 
-							bottomLeftCornerOfText, 
-							font, 
-							fontScale,
-							fontColor,
-							lineType)
-			visual = cv2.resize(thresholdedHandImage, (850, 480))
-				#print("max d detected: " , maxd)
-				#resize for image input
-				#visual = cv2.resize(visual, (426, 512))
-			cv2.imshow(window_name, visual)
-
-			key = cv2.waitKey(100000)
+			# key = cv2.waitKey(10000)
 
 			#DifferenceX = cX - maxf[0]
 			
@@ -436,6 +454,7 @@ while True:
 	#######################################
 
 
+	
 	k = cv2.waitKey(1) #k is the key pressed
 	if k == 27 or k==113:  #27, 113 are ascii for escape and q respectively
 		#exit

@@ -22,7 +22,7 @@ def nothing(x):
     pass
 
 # WEBCAM INPUT
-cam = cv2.VideoCapture("handMovie2.mov")
+cam = cv2.VideoCapture("handMovieBest.mov")
 cv2.namedWindow(window_name)    
 cv2.createTrackbar(trackbar_type, window_name , 3, max_type, nothing)
 # Create Trackbar to choose Threshold value
