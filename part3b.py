@@ -3,6 +3,7 @@ import cv2
 import argparse
 import numpy as np
 import pyautogui
+import time
 
 max_value = 255
 max_type = 4
@@ -18,6 +19,12 @@ bottomLeftCornerOfText = (10,500)
 fontScale              = 3
 fontColor              = (255,255,255)
 lineType               = 2
+
+timeSinceLastFive = time.time()
+timeSinceLastLeftOne = time.time()
+timeSinceLastRightOne = time.time()
+timeSinceLastLeftTwo = time.time()
+timeSinceLastRightTwo = time.time()
 
 def nothing(x):
 	pass
@@ -213,7 +220,7 @@ while True:
 
 							#print("far is : ", far)
 
-							if angle <= np.pi / 2.5:  
+							if angle <= np.pi / 2 and radi > 250:  
 								fingerCount += 1  
 								#print("far = ", str(far))
 								#print("start = ", str(start))
@@ -221,7 +228,7 @@ while True:
 							ffdlist.append((start, fingerCount, radi, (cX, cY)))
 							#print(ffdlist)
 							
-							key = cv2.waitKey(1000)
+							#key = cv2.waitKey(1000)
 							#clear up colors for next frame visualization
 							#cv2.line(thresholdedHandImage,start,end,[255,255,255],2)
 							#cv2.circle(thresholdedHandImage, far, 10, [0, 0, 0], -5) 
@@ -242,16 +249,16 @@ while True:
 			# inbuilt function to find the position of maximum 
 			radilist = [item[2] for item in ffdlist]
 			maxpos = radilist.index(max(radilist))
-			#print(maxd)
+			#print(ffdlist[maxpos])
 
-			cv2.circle(thresholdedHandImage, tuple(ffdlist[maxpos][0]), 25, [86, 100, 222], -100) #teal
+			cv2.circle(thresholdedHandImage, tuple(ffdlist[maxpos][0]), 25, teal, -100) #teal
 			
 			maxfarX, maxfarY = tuple(ffdlist[maxpos][0])
 			
-			cv2.line(thresholdedHandImage, (cX, cY), (maxfarX, maxfarY), [0, 0, 255], 3)
+			cv2.line(thresholdedHandImage, (cX, cY), (maxfarX, maxfarY), green, 3)
 
 			DifferenceX = cX - maxfarX
-			print("DifferenceX = ", str(DifferenceX))
+			#print("DifferenceX = ", str(DifferenceX))
 			
 			# So this will give us the one with the largest d BUT NOT THE CORRECT FINGER COUNT
 			ffd = list(ffdlist[maxpos])
@@ -266,6 +273,7 @@ while True:
 				#print("insider fingerlist")
 				fingerCount += 1
 				ffd[1] += 1
+				print(fingerCount)
 			
 			#print(maxd)
 			#maxf = max(flist)
@@ -280,7 +288,7 @@ while True:
 
 			outputMessage = str(fingerCount)
 
-			print(ffd)
+			#print(ffd)
 			# cv2.putText(thresholdedHandImage, outputMessage, 
 			# 				bottomLeftCornerOfText, 
 			# 				font, 
@@ -288,12 +296,13 @@ while True:
 			# 				fontColor,
 			# 				lineType)
 			# visual = cv2.resize(thresholdedHandImage, (850, 480))
-			# 	#print("max d detected: " , maxd)
+			# #   print("max d detected: " , maxd)
 			# 	#resize for image input
 			# 	#visual = cv2.resize(visual, (426, 512))
 			# cv2.imshow(window_name, visual)
 
-			# key = cv2.waitKey(10000)
+			# # Do not delete the following line! Or else the visualization will not show up at all.
+			# key = cv2.waitKey(100)
 
 			#DifferenceX = cX - maxf[0]
 			
@@ -307,48 +316,93 @@ while True:
 			#		2. 1 finger pointing left/right: skip back/forward 5 seconds respectively
 			#		3. 2 finger pointing left/right: skip back/forward 10 seconds respectively
 			# print(DifferenceX)
-			# # Static Gesture 1 of 3: 5 fingers open: pause/play
-			# if fingerCount is 5: # and farList[len(farList)-2][1] != 5:
-			# 	outputMessage = str(fingerCount)
-			# 	print("pause triggered!")
-			# 	#pyautogui.press('space')
+			# Check the number of fingers in the last 15 frames
+			# We want to see that the the number of fingers presented shows up for the last five frames 
+			# at a minimum (to ensure mistakes aren't counted)
+			# But we want to ignore if the number of fingers shows up for most of last 10 frames before the 5
+			mostRecentFingers = farList[len(farList)-1][1]
+			#print(mostRecentFingers)
+			lastTenFrames = farList[len(farList)-16 : len(farList)-6]
+			lastTenFramesFingers = [item[1] for item in lastTenFrames]
+			countLastTenFramesFingers = lastTenFramesFingers.count(mostRecentFingers)
+			lastFiveFrames = farList[len(farList)-6 : len(farList)-1]
+			lastFiveFramesFingers = [item[1] for item in lastFiveFrames]
+			countLastFiveFramesFingers = lastFiveFramesFingers.count(mostRecentFingers)
+			#lastFifteenFramesFingers [item[1] for item in lastFifteenFrames]
+			# print("countLastTenFramesFingers")
+			# print(countLastTenFramesFingers)
+			# print("countLastFiveFramesFingers")
+			# print(countLastFiveFramesFingers)
+			# Static Gesture 1 of 3: 5 fingers open: pause/play
+			# Need at least 1 whole second since last time conditional was reached 
+			currentTime = time.time()
+			if mostRecentFingers == 5: # and countLastTenFramesFingers < 6 and countLastFiveFramesFingers >= 3:
+				if currentTime - timeSinceLastFive > 1:
+					outputMessage = str(fingerCount)
+					print("pause triggered!")
+				timeSinceLastFive = currentTime
+				#pyautogui.press('space')
 			
-			# # Static Gesture 2 and 3: 1 finger pointing left/right: skip back/forward 5 seconds; 2 fingers pointing left and right skip back and forward
-			# #alternatively can be done using the angle from Cx, Cy to far
-			# elif DifferenceX > (maxd-1000): # and farList[len(farList)-1][0] not in range(DifferenceX-1000, DifferenceX+1000): #pointing right
-			# 	if fingerCount == 1:
-			# 		#pyautogui.press('right')
-			# 		outputMessage = "right 1"
-			# 	elif fingerCount == 2:
-			# 		#pyautogui.press('l')
-			# 		outputMessage = "right 2"
+			# # # Static Gesture 2 and 3: 1 finger pointing left/right: skip back/forward 5 seconds; 2 fingers pointing left and right skip back and forward
+			# # #alternatively can be done using the angle from Cx, Cy to far
+			elif DifferenceX < -250: # and farList[len(farList)-1][0] not in range(DifferenceX-1000, DifferenceX+1000): #pointing right
+				if mostRecentFingers == 1:
+					if currentTime - timeSinceLastRightOne > 1:
+						#pyautogui.press('right')
+						print("right 1 origin")
+					outputMessage = "right 1"
+					timeSinceLastRightOne = currentTime
+				elif mostRecentFingers == 2:
+					if currentTime - timeSinceLastRightTwo > 1:
+						#pyautogui.press('l')
+						print("right 2 origin")
+					outputMessage = "right 2"
+					timeSinceLastRightTwo = currentTime
 
-			# elif DifferenceX < (maxd-1000): #pointing left
-			# 	if fingerCount == 1:
-			# 		#pyautogui.press('left')
-			# 		outputMessage = "left 1"
-			# 	elif fingerCount == 2:
-			# 		#pyautogui.press('j')
-			# 		outputMessage = "left 2"
-			# else:
-			# 	outputMessage = str(fingerCount)
+			elif DifferenceX > 250: # and farList[len(farList)-1][0] not in range(DifferenceX-1000, DifferenceX+1000): #pointing right
+				if mostRecentFingers == 1:
+					if currentTime - timeSinceLastLeftOne > 1:
+						#pyautogui.press('right')
+						print("left 1 origin")
+					outputMessage = "left 1"
+					timeSinceLastLeftOne = currentTime
+				elif mostRecentFingers == 2:
+					if currentTime - timeSinceLastLeftTwo > 1:
+						#pyautogui.press('l')
+						print("left 2 origin")
+					outputMessage = "left 2"
+					timeSinceLastLeftTwo = currentTime
 
-			# if maxd < 100000:
-			# 	cv2.putText(thresholdedHandImage, outputMessage, 
-			# 				bottomLeftCornerOfText, 
-			# 				font, 
-			# 				fontScale,
-			# 				fontColor,
-			# 				lineType)
-			# 	visual = cv2.resize(thresholdedHandImage, (850, 480))
-			# 	#print("max d detected: " , maxd)
-			# 	#resize for image input
-			# 	#visual = cv2.resize(visual, (426, 512))
-			# 	cv2.imshow(window_name, visual)
+			# 4 dynamic/complex gestures
+			#		1. 2 finger swipe left/right: speed down/up video
+			#		2. 2 finger up/down: volume up/down
+			#		3. pinch to zoom in and out
+			#		4. wave bye: close the window
+		
+			# COMPLEX GESTURES
+			# Swipe up with one finger (volume up)
+
+		# Swipe down with one finger (volume down)
+
+
+
+			cv2.putText(thresholdedHandImage, outputMessage, 
+							bottomLeftCornerOfText, 
+							font, 
+							fontScale,
+							fontColor,
+							lineType)
+			visual = cv2.resize(thresholdedHandImage, (850, 480))
+			#print("max d detected: " , maxd)
+			#resize for image input
+			#visual = cv2.resize(visual, (426, 512))
+			cv2.imshow(window_name, visual)
+			# Do not delete the following line! Or else the visualization will not show up at all.
+			key = cv2.waitKey(100)
 			# else:
 			# 	print("FRAME REJECTED")
-	except:
-		pass
+	except Exception as e: print(e)
+
 
 		# 4 dynamic/complex gestures
 		#		1. 2 finger swipe left/right: speed down/up video
@@ -455,11 +509,11 @@ while True:
 
 
 	
-	k = cv2.waitKey(1) #k is the key pressed
-	if k == 27 or k==113:  #27, 113 are ascii for escape and q respectively
-		#exit
-		cv2.destroyAllWindows()
-		cam.release()
-		break
+	#k = cv2.waitKey(1) #k is the key pressed
+	# if k == 27 or k==113:  #27, 113 are ascii for escape and q respectively
+	# 	#exit
+	# 	cv2.destroyAllWindows()
+	# 	cam.release()
+	# 	break
 
 
