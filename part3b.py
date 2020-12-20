@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import pyautogui
 import time
+from statistics import mean
 
 max_value = 255
 max_type = 4
@@ -20,17 +21,24 @@ fontScale              = 3
 fontColor              = (255,255,255)
 lineType               = 2
 
+# Initalizing time for simple gestures
 timeSinceLastFive = time.time()
 timeSinceLastLeftOne = time.time()
 timeSinceLastRightOne = time.time()
 timeSinceLastLeftTwo = time.time()
 timeSinceLastRightTwo = time.time()
 
+#Initializing time for complex gestures
+timeLastTwoFingerSwipeRight = time.time()
+timeLastTwoFingerSwipeLeft = time.time()
+timeLastThreeFingerSwipeRight = time.time()
+timeLastThreeFingerSwipeLeft = time.time()
+
 def nothing(x):
 	pass
 
 # WEBCAM INPUT
-cam = cv2.VideoCapture("handMovieBest.mov")
+cam = cv2.VideoCapture("handGreatPointing.mov")
 cv2.namedWindow(window_name)    
 cv2.createTrackbar(trackbar_type, window_name , 3, max_type, nothing)
 # Create Trackbar to choose Threshold value
@@ -53,6 +61,8 @@ teal = [255, 243, 30]
 green = [12, 175, 0]
 red = [12, 49, 232]
 purple = [255, 13, 164]
+
+recentCommandList = []
 
 
 while True:
@@ -249,7 +259,7 @@ while True:
 			# inbuilt function to find the position of maximum 
 			radilist = [item[2] for item in ffdlist]
 			maxpos = radilist.index(max(radilist))
-			#print(ffdlist[maxpos])
+			#print(ffdlist[maxpos][3])
 
 			cv2.circle(thresholdedHandImage, tuple(ffdlist[maxpos][0]), 25, teal, -100) #teal
 			
@@ -258,7 +268,8 @@ while True:
 			cv2.line(thresholdedHandImage, (cX, cY), (maxfarX, maxfarY), green, 3)
 
 			DifferenceX = cX - maxfarX
-			#print("DifferenceX = ", str(DifferenceX))
+			DifferenceY = cY - maxfarY
+			print("DifferenceY = ", str(DifferenceY))
 			
 			# So this will give us the one with the largest d BUT NOT THE CORRECT FINGER COUNT
 			ffd = list(ffdlist[maxpos])
@@ -273,7 +284,7 @@ while True:
 				#print("insider fingerlist")
 				fingerCount += 1
 				ffd[1] += 1
-				print(fingerCount)
+				#print(fingerCount)
 			
 			#print(maxd)
 			#maxf = max(flist)
@@ -286,7 +297,7 @@ while True:
 				#print(farList[0])
 				#print(farList[49])
 
-			outputMessage = str(fingerCount)
+			#outputMessage = str(fingerCount)
 
 			#print(ffd)
 			# cv2.putText(thresholdedHandImage, outputMessage, 
@@ -321,13 +332,41 @@ while True:
 			# at a minimum (to ensure mistakes aren't counted)
 			# But we want to ignore if the number of fingers shows up for most of last 10 frames before the 5
 			mostRecentFingers = farList[len(farList)-1][1]
+			mostRecentRadi= farList[len(farList)-1][2]
 			#print(mostRecentFingers)
-			lastTenFrames = farList[len(farList)-16 : len(farList)-6]
-			lastTenFramesFingers = [item[1] for item in lastTenFrames]
-			countLastTenFramesFingers = lastTenFramesFingers.count(mostRecentFingers)
+			#lastTenFrames = farList[len(farList)-16 : len(farList)-6]
+			#lastTenFramesFingers = [item[1] for item in lastTenFrames]
+			#countLastTenFramesFingers = lastTenFramesFingers.count(mostRecentFingers)
 			lastFiveFrames = farList[len(farList)-6 : len(farList)-1]
 			lastFiveFramesFingers = [item[1] for item in lastFiveFrames]
-			countLastFiveFramesFingers = lastFiveFramesFingers.count(mostRecentFingers)
+
+			#THIS DOES NOT REFER TO THE CENTROID ANYMORE IT REFERS TO THE FARPOINT
+			centroidList = [item[0] for item in farList]
+			#print("ffdlist len = ", len(ffdlist))
+			#print(len(centroidList))
+
+			centroidListX = [item[0] for item in centroidList]
+			#print(centroidListX)
+			centroidMaxX = max(centroidListX)
+			centroidMinX = min(centroidListX)
+			# centroidMaxXPos = centroidListX.index(centroidMaxX)
+			# centroidMinXPos = centroidListX.index(centroidMinX)
+			centroidXDifference = centroidMaxX - centroidMinX
+			# centroidXDifferencePos = centroidMaxXPos - centroidMinXPos
+			# print(centroidXDifferencePos)
+			#print(centroidXDifferencePos)
+
+			centroidListY = [item[1] for item in centroidList]
+			centroidMaxY = max(centroidListY)
+			centroidMinY = min(centroidListY)
+			# centroidMaxYPos = centroidListY.index(centroidMaxY)
+			# centroidMinYPos = centroidListY.index(centroidMinY)
+			centroidYDifference = centroidMaxY - centroidMinY
+			minimumYDifference = .75*(mostRecentRadi)
+			# centroidYDifferencePos = centroidMaxYPos - centroidMinYPos
+			# # # Static Gesture 2 and 3: 1 finger pointing left/right: skip back/forward 5 seconds; 2 fingers pointing left and right skip back and forward
+			# # #alternatively can be done using the angle from Cx, Cy to far
+			#countLastFiveFramesFingers = lastFiveFramesFingers.count(mostRecentFingers)
 			#lastFifteenFramesFingers [item[1] for item in lastFifteenFrames]
 			# print("countLastTenFramesFingers")
 			# print(countLastTenFramesFingers)
@@ -336,54 +375,110 @@ while True:
 			# Static Gesture 1 of 3: 5 fingers open: pause/play
 			# Need at least 1 whole second since last time conditional was reached 
 			currentTime = time.time()
-			if mostRecentFingers == 5: # and countLastTenFramesFingers < 6 and countLastFiveFramesFingers >= 3:
+			if mean(lastFiveFramesFingers) == 5: # and countLastTenFramesFingers < 6 and countLastFiveFramesFingers >= 3:
 				if currentTime - timeSinceLastFive > 1:
 					outputMessage = str(fingerCount)
 					print("pause triggered!")
+					currentCommand = (currentTime, "pause")
+					# recentCommandList.append(currentCommand)
 				timeSinceLastFive = currentTime
 				#pyautogui.press('space')
-			
-			# # # Static Gesture 2 and 3: 1 finger pointing left/right: skip back/forward 5 seconds; 2 fingers pointing left and right skip back and forward
-			# # #alternatively can be done using the angle from Cx, Cy to far
-			elif DifferenceX < -250: # and farList[len(farList)-1][0] not in range(DifferenceX-1000, DifferenceX+1000): #pointing right
-				if mostRecentFingers == 1:
+			elif DifferenceX < -250 and DifferenceY < minimumYDifference: # and farList[len(farList)-1][0] not in range(DifferenceX-1000, DifferenceX+1000): #pointing right
+				if mean(lastFiveFramesFingers) == 1:
+					currentCommand = ("right 1")
 					if currentTime - timeSinceLastRightOne > 1:
-						#pyautogui.press('right')
-						print("right 1 origin")
+						if recentCommandList.count(currentCommand) > 8:
+							#pyautogui.press('right')
+							print("right 1 origin")
 					outputMessage = "right 1"
 					timeSinceLastRightOne = currentTime
-				elif mostRecentFingers == 2:
+					# recentCommandList.append(currentCommand)
+
+				elif mean(lastFiveFramesFingers) == 2:
+					currentCommand = ("right 2")
 					if currentTime - timeSinceLastRightTwo > 1:
-						#pyautogui.press('l')
-						print("right 2 origin")
+						if recentCommandList.count(currentCommand) > 8:
+							#pyautogui.press('l')
+							print("right 2 origin")
 					outputMessage = "right 2"
 					timeSinceLastRightTwo = currentTime
+					# recentCommandList.append(currentCommand)
 
-			elif DifferenceX > 250: # and farList[len(farList)-1][0] not in range(DifferenceX-1000, DifferenceX+1000): #pointing right
-				if mostRecentFingers == 1:
+			elif DifferenceX > 250 and DifferenceY < minimumYDifference: # and farList[len(farList)-1][0] not in range(DifferenceX-1000, DifferenceX+1000): #pointing right
+				if mean(lastFiveFramesFingers) == 1:
+					currentCommand = ("left 1")
 					if currentTime - timeSinceLastLeftOne > 1:
-						#pyautogui.press('right')
-						print("left 1 origin")
+						if recentCommandList.count(currentCommand) > 8:
+							#pyautogui.press('right')
+							print("left 1 origin")
 					outputMessage = "left 1"
 					timeSinceLastLeftOne = currentTime
-				elif mostRecentFingers == 2:
+					
+					# recentCommandList.append(currentCommand)
+				elif mean(lastFiveFramesFingers) == 2:
+					currentCommand = ("left 2")
 					if currentTime - timeSinceLastLeftTwo > 1:
-						#pyautogui.press('l')
-						print("left 2 origin")
+						if recentCommandList.count(currentCommand) > 8:
+							#pyautogui.press('l')
+							print("left 2 origin")
 					outputMessage = "left 2"
 					timeSinceLastLeftTwo = currentTime
-
+					# recentCommandList.append(currentCommand)
+			
 			# 4 dynamic/complex gestures
 			#		1. 2 finger swipe left/right: speed down/up video
 			#		2. 2 finger up/down: volume up/down
 			#		3. pinch to zoom in and out
 			#		4. wave bye: close the window
-		
+			
+			# Setup for the complex gestures
+			# Find the extremes over the last 50 frames
+			# ffdlist.append((start, fingerCount, radi, (cX, cY)))
+			# radilist = [item[2] for item in ffdlist]
+			# maxpos = radilist.index(max(radilist))
+
+			
+
+			#print("centroidXDifference = ", str(centroidXDifference), " with position diff of ", centroidXDifferencePos)
+			#print("centroidYDifference = ", str(centroidYDifference), " with position diff of ", centroidYDifferencePos)
+
+			# this means it has moved to the right
+			elif centroidXDifference > 400  and DifferenceX < 100 and DifferenceY > minimumYDifference: #and centroidXDifferencePos > 0
+				if mean(lastFiveFramesFingers) == 2:
+					if currentTime - timeLastTwoFingerSwipeRight > 3:
+						outputMessage = ("two finger swipe right")
+					timeLastTwoFingerSwipeRight = currentTime 
+				elif mean(lastFiveFramesFingers) == 3:
+					if currentTime - timeLastThreeFingerSwipeRight > 3:
+						outputMessage = ("three finger swipe right")
+					timeLastThreeFingerSwipeRight = currentTime
+
+			# this means it has moved to the left
+			elif centroidXDifference > 400  and DifferenceX > -100 and DifferenceY > minimumYDifference: #and centroidXDifferencePos < 0
+				if mean(lastFiveFramesFingers) == 2:
+					if currentTime - timeLastTwoFingerSwipeLeft > 3:
+						outputMessage = ("two finger swipe left")
+
+					timeLastTwoFingerSwipeLeft = currentTime 
+				elif mean(lastFiveFramesFingers) == 3:
+					if currentTime - timeLastThreeFingerSwipeLeft > 3:
+						outputMessage = ("three finger swipe left")
+					timeLastThreeFingerSwipeLeft = currentTime
+			else:
+				outputMessage = (str(fingerCount))
+
 			# COMPLEX GESTURES
 			# Swipe up with one finger (volume up)
 
-		# Swipe down with one finger (volume down)
+			# Swipe down with one finger (volume down)
+			print(currentCommand)
 
+			if len(recentCommandList) < 10:
+				recentCommandList.append(currentCommand)
+			else: 
+				recentCommandList.pop(0)
+				recentCommandList.append(currentCommand)
+			print(recentCommandList)
 
 
 			cv2.putText(thresholdedHandImage, outputMessage, 
