@@ -43,7 +43,7 @@ def nothing(x):
     pass
 
 # WEBCAM INPUT
-cam = cv2.VideoCapture("handGreat.mov")
+cam = cv2.VideoCapture("HANDFINAL.mov")
 cv2.namedWindow(window_name)    
 cv2.createTrackbar(trackbar_type, window_name , 3, max_type, nothing)
 # Create Trackbar to choose Threshold value
@@ -322,25 +322,21 @@ while True:
                 if lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 1:
                     currentCommand = ("right 1")
                     if recentCommandList.count(currentCommand) > 8:
-                        print(recentCommandList.count(currentCommand))
-                        if currentTime - timeSinceLastRightOne > 2:
-                            pyautogui.press('right')
-                            time.sleep(1)
-                            pyautogui.press('space')
-                            print("Skip forward one frame, sleep for one second, continue")
                         outputMessage = "right 1"
+                        if currentTime - timeSinceLastRightOne > 2:
+                            pyautogui.press('right', presses=5)
+                            #pyautogui.press('space')
+                            print("Skip forward five frames")
                         timeSinceLastRightOne = currentTime
                 # Pointing right 2 fingers
                 elif lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 2:
                     currentCommand = ("right 2")
                     if recentCommandList.count(currentCommand) > 8:
-                        print(currentCommand, recentCommandList.count(currentCommand))
+                        outputMessage = "right 2"
                         if currentTime - timeSinceLastRightTwo > 2:
                             pyautogui.press('right', presses = 10)
-                            time.sleep(1)
-                            pyautogui.press('space')
+                            #pyautogui.press('space')
                             print("Skip forward 10 frames")
-                        outputMessage = "right 2"
                         timeSinceLastRightTwo = currentTime
                     
             # Pointing Left
@@ -351,23 +347,22 @@ while True:
                     currentCommand = ("left 1")
                     if recentCommandList.count(currentCommand) > 8:
                         outputMessage = "left 1"
-                        timeSinceLastLeftOne = currentTime
                         if currentTime - timeSinceLastLeftOne > 2:
-                            pyautogui.press('left')
-                            time.sleep(1)
-                            pyautogui.press('space')
-                            print("Go back one frame, sleep for one second, continue")
+                            print("Go back 5 frames")
+                            pyautogui.press('left', presses=5)
+                            #pyautogui.press('space')
+                        timeSinceLastLeftOne = currentTime
+                            
                 # Pointing left two fingers
                 elif lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 2:
                     currentCommand = ("left 2")
                     if recentCommandList.count(currentCommand) > 8:
                         outputMessage = "left 2"
-                        timeSinceLastLeftTwo = currentTime
                         if currentTime - timeSinceLastLeftTwo > 2:
+                            print("Go back 10 frames")
                             pyautogui.press('left', presses = 10)
-                            time.sleep(1)
-                            pyautogui.press('space')
-                            print("left 2 origin")
+                            #pyautogui.press('space')
+                        timeSinceLastLeftTwo = currentTime    #print("left 2 origin")
                         
             
             # 4 dynamic gestures
@@ -392,17 +387,18 @@ while True:
                 # With two fingers 
                 if lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 2:
                     if currentTime - timeLastTwoFingerSwipeRight > 2:
-                        outputMessage = ("two finger swipe left")
+                        outputMessage = ("Go back 30 frames")
                         pyautogui.press('left', presses=30)
                     timeLastTwoFingerSwipeRight = currentTime
                 # With three fingers 
                 elif lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 3:
-                    timeLastThreeFingerSwipeRight = currentTime
                     if currentTime - timeLastThreeFingerSwipeRight > 2:
-                        outputMessage = ("three finger swipe left")
+                        outputMessage = ("Go to beginning of video")
                         pyautogui.keydown('option')
-                        pyautogui.press('left')
-                        pyautogui.keyup('option')                    
+                        pyautogui.keydown('left')
+                        pyautogui.keyup('left')
+                        pyautogui.keyup('option')  
+                    timeLastThreeFingerSwipeRight = currentTime                  
 
             # Swipe right
             elif centroidXDifference > minimumHorizontalDistance \
@@ -412,18 +408,19 @@ while True:
                 # With two fingers
                 if currentTime - timeLastTwoFingerSwipeLeft > 2:
                     if lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 2:
-                        outputMessage = ("two finger swipe right")
+                        outputMessage = ("Go forward 30 frames")
                         pyautogui.press('right', presses=30)
                     timeLastTwoFingerSwipeLeft = currentTime 
                 # With three fingers
                 elif currentTime - timeLastThreeFingerSwipeLeft > 2:
+                    timeLastThreeFingerSwipeLeft = currentTime
                     if lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 3:
-                        outputMessage = ("three finger swipe right")
+                        outputMessage = ("Go to end of movie")
                         #skip to end of video
                         pyautogui.keydown('option')
-                        pyautogui.press('right')
+                        pyautogui.keydown('right')
+                        pyautogui.keyup('right')
                         pyautogui.keyup('option')
-                    timeLastThreeFingerSwipeLeft = currentTime
             
             #Swipe down and up
             elif AreaDifference > 40000:
@@ -432,7 +429,7 @@ while True:
                     # Swipe up two fingers
                     if currentTime - timeLastTwoFingerSwipeUp > 2:
                         if lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 2:
-                            outputMessage = ("two finger swipe up")
+                            outputMessage = ("Volume up 1")
                             pyautogui.press('volumeup')
                         timeLastTwoFingerSwipeUp = currentTime 
                     # Swipe up three fingers
@@ -440,8 +437,8 @@ while True:
                         if lastFiveFramesFingers.count(mostRecentFingers) >= 4 \
                            and mostRecentFingers == 3 \
                            and AreaDifference > 70000:
-                            outputMessage = ("three finger swipe up")
-                            pyautogui.press('up', presses = 5)
+                            outputMessage = ("Volume up 5")
+                            pyautogui.press('volumeup', presses = 5)
                         timeLastThreeFingerSwipeUp = currentTime
                 #Swipe Down
                 elif AreaDifferencePos < 0:
@@ -449,24 +446,22 @@ while True:
                     if currentTime - timeLastTwoFingerSwipeDown > 2:
                         timeLastTwoFingerSwipeDown = currentTime 
                         if lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 2:
-                            outputMessage = ("two finger swipe down")
-                            pyautogui.press('down')
+                            outputMessage = ("Volume down 1")
+                            pyautogui.press('volumedown')
                     # Swipe down three fingers
                     elif currentTime - timeLastThreeFingerSwipeDown > 2:
                         timeLastThreeFingerSwipeDown = currentTime
                         if lastFiveFramesFingers.count(mostRecentFingers) >= 4 \
                            and mostRecentFingers == 3 \
                            and AreaDifference > 70000:
-                            outputMessage = ("three finger swipe down")
-                            pyautogui.press('up', presses = 5)
+                            outputMessage = ("Volume down 5")
+                            pyautogui.press('volumedown', presses = 5)
                         
             # Zero Fingers Fist Edge Case
             elif lastFiveFramesFingers.count(mostRecentFingers) >= 4 and mostRecentFingers == 0:
                 currentCommand = (str(mostRecentFingers))
                 outputMessage = (str(mostRecentFingers))
-            else: 
-                currentCommand = str(mostRecentFingers)
-                if lastFiveFramesFingers.count(mostRecentFingers) >= 4:
+            elif lastFiveFramesFingers.count(mostRecentFingers) >= 4:
                     currentCommand = (str(mostRecentFingers))
                     outputMessage = (str(mostRecentFingers))
 
@@ -491,5 +486,5 @@ while True:
         #######################################
         #    Gesture Recognition (end)        #
         #######################################
-    except Exception as e: print(e)
+    except Exception as e: print("")
     
